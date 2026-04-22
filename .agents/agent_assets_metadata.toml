@@ -1,0 +1,32 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "6WM7OAcC3ferRzxAGM7Qw"
+uri = "file://artifacts/videosave/public/hero-artwork.png"
+type = "image"
+title = "Abstract dark glowing grid"
+
+[[generated]]
+id = "fa3rLxwhr6S-Mnj934fCt"
+uri = "file://artifacts/videosave/public/auth-side.png"
+type = "image"
+title = "Auth screen side image"
+
+[[generated]]
+id = "DeEWoEMZvWrj-599oIEdJ"
+uri = "file://artifacts/videosave/public/blog-1.png"
+type = "image"
+title = "Blog post cover one"
+
+[[generated]]
+id = "8QJQI2uX5hd8_7rYboHbw"
+uri = "file://artifacts/videosave/public/blog-2.png"
+type = "image"
+title = "Blog post cover two"
+
+[[generated]]
+id = "gMh82jqFGfZieS_7eBdgX"
+uri = "file://artifacts/videosave/public/blog-3.png"
+type = "image"
+title = "Blog post cover three"
