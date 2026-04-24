@@ -1,0 +1,10 @@
+{
+  "name": "@workspace/api-client-react",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "type": "module",
+  "dependencies": {
+    "@tanstack/react-query": "^5.28.0"
+  }
+}
