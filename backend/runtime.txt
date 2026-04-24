@@ -1,0 +1,5 @@
+cd /home/alyan/Downloads/voice/Code-Sync/backend
+
+cat > runtime.txt << 'EOF'
+python-3.11.15
+EOF
