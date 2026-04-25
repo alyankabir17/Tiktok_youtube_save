@@ -122,9 +122,13 @@ async def serve_file(job_id: str, filename: str = "video.mp4") -> FileResponse:
 
 @router.get("/stats")
 async def download_stats():
-    """Simple stats endpoint that doesn't require database"""
-    return {
-        "total_downloads": 0,
-        "tiktok_downloads": 0,
-        "youtube_downloads": 0,
-    }
+    """Download statistics endpoint"""
+    try:
+        return {
+            "total_downloads": 0,
+            "tiktok_downloads": 0,
+            "youtube_downloads": 0,
+            "status": "ok"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
