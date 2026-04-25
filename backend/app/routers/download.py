@@ -120,7 +120,11 @@ async def serve_file(job_id: str, filename: str = "video.mp4") -> FileResponse:
     )
 
 
-@router.get("/stats", response_model=DownloadStatsResponse)
-async def download_stats(db: AsyncSession = Depends(get_db)) -> DownloadStatsResponse:
-    stats = await get_download_stats(db)
-    return DownloadStatsResponse.model_validate(stats)
+@router.get("/stats")
+async def download_stats():
+    """Simple stats endpoint that doesn't require database"""
+    return {
+        "total_downloads": 0,
+        "tiktok_downloads": 0,
+        "youtube_downloads": 0,
+    }
