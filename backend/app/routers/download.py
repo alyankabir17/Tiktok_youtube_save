@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.middleware.rate_limiter import check_rate_limit
 from app.models.schemas import DownloadInfoRequest, DownloadStartRequest, DownloadStartResponse, DownloadStatsResponse, VideoInfoResponse
 from app.models.user import User
 from app.services.history_service import create_history_entry, get_download_stats
@@ -22,7 +21,7 @@ from app.utils.url_parser import detect_platform
 router = APIRouter(prefix="/api/download", tags=["download"])
 
 
-@router.post("/info", response_model=VideoInfoResponse, dependencies=[Depends(check_rate_limit)])
+@router.post("/info", response_model=VideoInfoResponse)
 async def get_video_info(payload: DownloadInfoRequest) -> VideoInfoResponse:
     platform = detect_platform(payload.url)
     if not platform:
@@ -41,7 +40,7 @@ async def get_video_info(payload: DownloadInfoRequest) -> VideoInfoResponse:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Could not fetch video info: {exc}") from exc
 
 
-@router.post("/start", response_model=DownloadStartResponse, dependencies=[Depends(check_rate_limit)])
+@router.post("/start", response_model=DownloadStartResponse)
 async def start_download(
     payload: DownloadStartRequest,
     request: Request,
@@ -125,10 +124,3 @@ async def serve_file(job_id: str, filename: str = "video.mp4") -> FileResponse:
 async def download_stats(db: AsyncSession = Depends(get_db)) -> DownloadStatsResponse:
     stats = await get_download_stats(db)
     return DownloadStatsResponse.model_validate(stats)
-@router.get("/stats")
-async def get_stats():
-    return {
-        "total_downloads": 0,
-        "tiktok_downloads": 0,
-        "youtube_downloads": 0,
-    }
