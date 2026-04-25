@@ -21,5 +21,5 @@ COPY . .
 # Create temp directory
 RUN mkdir -p /tmp/downloads
 
-# Run migrations and start app
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 10000"]
+# Start app WITHOUT running migrations
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
