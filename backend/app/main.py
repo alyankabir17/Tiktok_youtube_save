@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.routers import health, auth, download, history
-from app.core.config import settings
+from app.config import settings
 
 app = FastAPI(title="VideoDownloader API", version="1.0.0")
 
