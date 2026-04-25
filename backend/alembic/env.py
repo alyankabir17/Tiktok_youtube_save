@@ -1,27 +1,20 @@
+import os
+import ssl
 from logging.config import fileConfig
-
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
+from sqlalchemy.pool import NullPool
 from alembic import context
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from app.config import settings
 from app.database import Base
-from app.models import download_history, user  # noqa: F401
-
+from app.config import settings
 
 config = context.config
-
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
-
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = settings.DATABASE_URL.replace("?sslmode=require", "")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -33,18 +26,20 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
 async def run_migrations_online() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_REQUIRED
+    
+    database_url = settings.DATABASE_URL.replace("?sslmode=require", "")
+    
+    connectable = create_async_engine(
+        database_url,
+        echo=False,
+        connect_args={
+            "ssl": ssl_context,
+        },
+        poolclass=NullPool,
     )
 
     async with connectable.connect() as connection:
@@ -53,9 +48,12 @@ async def run_migrations_online() -> None:
     await connectable.dispose()
 
 
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    import asyncio
+def do_run_migrations(connection):
+    context.configure(connection=connection, target_metadata=target_metadata)
 
-    asyncio.run(run_migrations_online())
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+import asyncio
+asyncio.run(run_migrations_online())
