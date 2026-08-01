@@ -25,7 +25,9 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
       setUrl(text);
       const detected = detectPlatform(text);
       if (detected && detected !== platform) {
-        navigate(detected === "tiktok" ? "/" : "/youtube");
+        if (detected === "tiktok") navigate("/");
+        else if (detected === "youtube") navigate("/youtube");
+        else navigate("/vimeo");
         return;
       }
       inputRef.current?.focus();
@@ -38,7 +40,9 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
     setUrl(value);
     const detected = detectPlatform(value);
     if (detected && detected !== platform) {
-      navigate(detected === "tiktok" ? "/" : "/youtube");
+      if (detected === "tiktok") navigate("/");
+      else if (detected === "youtube") navigate("/youtube");
+      else navigate("/vimeo");
     }
   };
 
@@ -61,6 +65,8 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
             background:
               platform === "tiktok"
                 ? "conic-gradient(from var(--angle, 0deg), #ff0050, #8b5cf6, #06b6d4, #ff0050)"
+                : platform === "vimeo"
+                ? "conic-gradient(from var(--angle, 0deg), #1ab7ea, #0f5f7a, #06b6d4, #1ab7ea)"
                 : "conic-gradient(from var(--angle, 0deg), #ff0000, #f59e0b, #8b5cf6, #ff0000)",
             opacity: focused ? 0.9 : 0.4,
           }}
@@ -76,6 +82,8 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
             placeholder={
               platform === "tiktok"
                 ? "Paste a TikTok link, e.g. https://www.tiktok.com/@user/video/..."
+                : platform === "vimeo"
+                ? "Paste a Vimeo link, e.g. https://vimeo.com/123456789"
                 : "Paste a YouTube link, e.g. https://youtube.com/watch?v=..."
             }
             className="flex-1 bg-transparent border-0 outline-none px-4 py-3 text-sm md:text-base placeholder:text-muted-foreground/60"

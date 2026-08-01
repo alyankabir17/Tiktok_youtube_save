@@ -1,6 +1,6 @@
 import { useMutation, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 
-export type Platform = "tiktok" | "youtube";
+export type Platform = "tiktok" | "youtube" | "vimeo";
 
 export interface VideoFormatOption {
   id: string;

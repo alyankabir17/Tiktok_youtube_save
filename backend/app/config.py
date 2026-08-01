@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     AUTH_RATE_LIMIT_PER_HOUR: int = 120
 
     TIKTOK_COOKIE_FILE: str | None = None
+    YOUTUBE_COOKIE_FILE: str | None = None
+    VIMEO_COOKIE_FILE: str | None = None
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod

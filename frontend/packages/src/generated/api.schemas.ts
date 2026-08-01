@@ -1,6 +1,6 @@
 // Generated API Schemas
 
-export type Platform = "tiktok" | "youtube";
+export type Platform = "tiktok" | "youtube" | "vimeo";
 export type Format = "mp4" | "mp3";
 
 export interface VideoFormat {

@@ -36,7 +36,7 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
     setQuality(newOpts[0]?.quality ?? "");
   };
 
-  const accent = platform === "tiktok" ? "#ff0050" : "#ff0000";
+  const accent = platform === "tiktok" ? "#ff0050" : platform === "vimeo" ? "#1ab7ea" : "#ff0000";
   const isDownloading = status === "downloading";
   const isDone = status === "done";
 

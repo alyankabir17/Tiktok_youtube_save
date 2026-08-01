@@ -51,11 +51,12 @@ export function useDownload(expectedPlatform?: Platform) {
       }
       const platform = detectPlatform(trimmed);
       if (!platform) {
-        setError("Only TikTok and YouTube links are supported.");
+        setError("Only TikTok, YouTube, and Vimeo links are supported.");
         return;
       }
       if (expectedPlatform && platform !== expectedPlatform) {
-        setError(`That looks like a ${platform === "tiktok" ? "TikTok" : "YouTube"} link.`);
+        const platformName = platform === "tiktok" ? "TikTok" : platform === "youtube" ? "YouTube" : "Vimeo";
+        setError(`That looks like a ${platformName} link.`);
         return;
       }
       try {

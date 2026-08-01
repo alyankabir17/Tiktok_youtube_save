@@ -13,6 +13,7 @@ from app.models.user import User
 from app.services.history_service import create_history_entry, get_download_stats
 from app.services.tiktok import download_tiktok, get_tiktok_info
 from app.services.youtube import download_youtube, get_youtube_info
+from app.services.vimeo import download_vimeo, get_vimeo_info
 from app.utils.dependencies import get_optional_current_user
 from app.utils.file_cleanup import schedule_cleanup
 from app.utils.url_parser import detect_platform
@@ -33,8 +34,10 @@ async def get_video_info(payload: DownloadInfoRequest) -> VideoInfoResponse:
     try:
         if platform == "tiktok":
             info = await get_tiktok_info(payload.url)
-        else:
+        elif platform == "youtube":
             info = await get_youtube_info(payload.url)
+        else:
+            info = await get_vimeo_info(payload.url)
         return VideoInfoResponse.model_validate(info)
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Could not fetch video info: {exc}") from exc
@@ -54,8 +57,10 @@ async def start_download(
     try:
         if platform == "tiktok":
             result = await download_tiktok(payload.url, payload.format, payload.quality)
-        else:
+        elif platform == "youtube":
             result = await download_youtube(payload.url, payload.format, payload.quality)
+        else:
+            result = await download_vimeo(payload.url, payload.format, payload.quality)
 
         schedule_cleanup(result["file_path"], delay=600)
 

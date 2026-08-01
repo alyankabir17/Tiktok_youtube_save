@@ -14,8 +14,8 @@ class DownloadInfoRequest(BaseModel):
         # Auto-add https:// if missing
         if not v.startswith("http"):
             v = "https://" + v
-        if not ("tiktok.com" in v or "youtube.com" in v or "youtu.be" in v):
-            raise ValueError("Only TikTok and YouTube URLs are supported")
+        if not ("tiktok.com" in v or "youtube.com" in v or "youtu.be" in v or "vimeo.com" in v):
+            raise ValueError("Only TikTok, YouTube, and Vimeo URLs are supported")
         return v
 
 

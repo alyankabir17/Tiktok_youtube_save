@@ -6,6 +6,7 @@ export function PlatformTabs() {
   const tabs = [
     { href: "/", label: "TikTok", color: "#ff0050" },
     { href: "/youtube", label: "YouTube", color: "#ff0000" },
+    { href: "/vimeo", label: "Vimeo", color: "#1ab7ea" },
   ];
 
   return (

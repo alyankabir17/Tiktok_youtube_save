@@ -43,6 +43,8 @@ export function Downloader({ platform, eyebrow, title, subtitle }: Props) {
             background:
               platform === "tiktok"
                 ? "radial-gradient(circle at 30% 50%, #ff0050, transparent 60%), radial-gradient(circle at 70% 50%, #8b5cf6, transparent 60%)"
+                : platform === "vimeo"
+                ? "radial-gradient(circle at 30% 50%, #1ab7ea, transparent 60%), radial-gradient(circle at 70% 50%, #0f5f7a, transparent 60%)"
                 : "radial-gradient(circle at 30% 50%, #ff0000, transparent 60%), radial-gradient(circle at 70% 50%, #f59e0b, transparent 60%)",
           }}
         />

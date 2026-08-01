@@ -14,6 +14,7 @@ import { toast } from "sonner";
 const NAV = [
   { href: "/", label: "TikTok" },
   { href: "/youtube", label: "YouTube" },
+  { href: "/vimeo", label: "Vimeo" },
   { href: "/blog", label: "Blog" },
   { href: "/history", label: "History" },
 ];

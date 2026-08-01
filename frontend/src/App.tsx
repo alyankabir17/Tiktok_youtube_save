@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import HomePage from "@/pages/HomePage";
 import YouTubePage from "@/pages/YouTubePage";
+import VimeoPage from "@/pages/VimeoPage";
 import HistoryPage from "@/pages/HistoryPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
@@ -25,6 +26,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/youtube" component={YouTubePage} />
+      <Route path="/vimeo" component={VimeoPage} />
       <Route path="/history" component={HistoryPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/register" component={RegisterPage} />
