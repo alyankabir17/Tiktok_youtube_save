@@ -9,6 +9,30 @@ TEMP_DIR = Path(settings.TEMP_DIR)
 TEMP_DIR.mkdir(exist_ok=True, parents=True)
 
 
+def _get_cookie_file_path() -> str | None:
+    # 1. Check if YOUTUBE_COOKIE_FILE path exists
+    if getattr(settings, "YOUTUBE_COOKIE_FILE", None) and os.path.exists(settings.YOUTUBE_COOKIE_FILE):
+        return settings.YOUTUBE_COOKIE_FILE
+
+    # 2. Check if YOUTUBE_COOKIES env var contains raw Netscape cookie content string
+    cookies_raw = getattr(settings, "YOUTUBE_COOKIES", None) or os.getenv("YOUTUBE_COOKIES")
+    if cookies_raw and cookies_raw.strip():
+        tmp_cookie_path = TEMP_DIR / "youtube_cookies.txt"
+        try:
+            with open(tmp_cookie_path, "w", encoding="utf-8") as f:
+                f.write(cookies_raw.strip())
+            return str(tmp_cookie_path)
+        except Exception:
+            pass
+
+    # 3. Check for local cookies.txt file in backend directory or root
+    for candidate in ["youtube_cookies.txt", "cookies.txt", "../cookies.txt"]:
+        if os.path.exists(candidate):
+            return candidate
+
+    return None
+
+
 def _build_youtube_opts(extra_opts: dict | None = None) -> dict:
     opts = {
         "quiet": True,
@@ -16,16 +40,18 @@ def _build_youtube_opts(extra_opts: dict | None = None) -> dict:
         "socket_timeout": 30,
         "http_headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
         },
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "ios", "mweb", "web"]
+                "player_client": ["ios", "mweb", "android", "web", "tv"]
             }
         }
     }
 
-    if getattr(settings, "YOUTUBE_COOKIE_FILE", None) and os.path.exists(settings.YOUTUBE_COOKIE_FILE):
-        opts["cookiefile"] = settings.YOUTUBE_COOKIE_FILE
+    cookie_file = _get_cookie_file_path()
+    if cookie_file:
+        opts["cookiefile"] = cookie_file
 
     if extra_opts:
         opts.update(extra_opts)

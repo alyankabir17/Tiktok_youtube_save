@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 
     TIKTOK_COOKIE_FILE: str | None = None
     YOUTUBE_COOKIE_FILE: str | None = None
+    YOUTUBE_COOKIES: str | None = None
     VIMEO_COOKIE_FILE: str | None = None
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
