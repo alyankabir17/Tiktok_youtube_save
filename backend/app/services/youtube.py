@@ -64,39 +64,47 @@ def _build_youtube_opts(extra_opts: dict | None = None) -> dict:
 
 async def get_youtube_info(url: str) -> dict:
     opts = _build_youtube_opts({"skip_download": True})
-    
+
     def _extract():
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            
+
             available_heights = set()
             for fmt in info.get("formats", []):
                 h = fmt.get("height")
                 if h and fmt.get("vcodec") != "none":
                     available_heights.add(h)
-            
+
+            standard_heights = [4320, 2160, 1440, 1080, 720, 480, 360, 240, 144]
             quality_options = []
-            for height in sorted(available_heights, reverse=True):
-                if height in [2160, 1440, 1080, 720, 480, 360, 240]:
-                    label = "4K" if height == 2160 else f"{height}p"
+
+            # Add all supported standard resolutions found or custom resolutions
+            combined_heights = sorted(available_heights.union(set(h for h in standard_heights if any(avail <= h for avail in available_heights))), reverse=True)
+
+            for height in combined_heights:
+                if height in available_heights or any(h >= height for h in available_heights):
+                    label_map = {4320: "8K", 2160: "4K", 1440: "2K (1440p)"}
+                    label = label_map.get(height, f"{height}p")
                     quality_options.append({
                         "id": f"mp4_{height}p",
                         "label": f"MP4 {label}",
                         "format": "mp4",
                         "quality": f"{height}p"
                     })
-            
+
             if not quality_options:
                 quality_options = [
-                    {"id": "mp4_best", "label": "MP4 Best", "format": "mp4", "quality": "best"},
+                    {"id": "mp4_best", "label": "MP4 Best Quality", "format": "mp4", "quality": "best"},
                 ]
-            
+
             quality_options += [
-                {"id": "mp3_320", "label": "MP3 320kbps", "format": "mp3", "quality": "320"},
-                {"id": "mp3_192", "label": "MP3 192kbps", "format": "mp3", "quality": "192"},
-                {"id": "mp3_128", "label": "MP3 128kbps", "format": "mp3", "quality": "128"},
+                {"id": "mp3_320", "label": "MP3 Audio (320kbps)", "format": "mp3", "quality": "320"},
+                {"id": "mp3_192", "label": "MP3 Audio (192kbps)", "format": "mp3", "quality": "192"},
+                {"id": "m4a_best", "label": "M4A AAC Audio", "format": "m4a", "quality": "best"},
+                {"id": "wav_best", "label": "WAV Lossless Audio", "format": "wav", "quality": "best"},
+                {"id": "flac_best", "label": "FLAC Lossless Audio", "format": "flac", "quality": "best"},
             ]
-            
+
             return {
                 "title": info.get("title"),
                 "thumbnail": info.get("thumbnail"),
@@ -107,32 +115,46 @@ async def get_youtube_info(url: str) -> dict:
                 "formats": quality_options,
                 "platform": "youtube"
             }
-    
+
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _extract)
 
 
 async def download_youtube(url: str, format: str, quality: str) -> dict:
     job_id = str(uuid.uuid4())
-    ext = "mp3" if format == "mp3" else "mp4"
+    fmt_lower = format.lower()
     output_template = str(TEMP_DIR / f"{job_id}.%(ext)s")
-    
-    if format == "mp3":
+
+    audio_formats = ["mp3", "m4a", "wav", "flac", "opus", "aac", "ogg"]
+    if fmt_lower in audio_formats:
+        ext = fmt_lower
         bitrate = quality if quality.isdigit() else "192"
         download_opts = {
             "outtmpl": output_template,
             "format": "bestaudio/best",
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
+                "preferredcodec": fmt_lower,
                 "preferredquality": bitrate,
             }],
         }
     else:
+        ext = fmt_lower if fmt_lower in ["webm", "mkv", "mov", "avi"] else "mp4"
+        if quality and quality.endswith("p") and quality[:-1].isdigit():
+            target_height = int(quality[:-1])
+            format_spec = (
+                f"bestvideo[height<={target_height}][ext={ext}]+bestaudio/"
+                f"bestvideo[height<={target_height}]+bestaudio/"
+                f"best[height<={target_height}]/"
+                f"best[ext={ext}]/best"
+            )
+        else:
+            format_spec = f"bestvideo[ext={ext}]+bestaudio/bestvideo+bestaudio/best[ext={ext}]/best"
+
         download_opts = {
             "outtmpl": output_template,
-            "format": "best[ext=mp4]/best",
-            "merge_output_format": "mp4",
+            "format": format_spec,
+            "merge_output_format": ext,
         }
     
     opts = _build_youtube_opts(download_opts)

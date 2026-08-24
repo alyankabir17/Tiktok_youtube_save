@@ -22,6 +22,35 @@ from app.utils.url_parser import detect_platform
 router = APIRouter(prefix="/api/download", tags=["download"])
 
 
+def _clean_error_message(exc: Exception) -> str:
+    raw_msg = str(exc)
+
+    if "https://github.com/yt-dlp" in raw_msg:
+        raw_msg = raw_msg.split("See  https://github.com")[0].split("See https://github.com")[0]
+
+    for prefix in ["ERROR: [youtube]", "ERROR: [tiktok]", "ERROR: [vimeo]"]:
+        if prefix in raw_msg:
+            raw_msg = raw_msg.split(prefix)[1].strip()
+            if ":" in raw_msg and len(raw_msg.split(":")[0].strip()) <= 15:
+                raw_msg = raw_msg.split(":", 1)[1].strip()
+            break
+
+    msg_lower = raw_msg.lower()
+    if "private video" in msg_lower:
+        return "This video is private or restricted."
+    if "sign in to confirm" in msg_lower or "please sign in" in msg_lower:
+        return "This video requires authentication or sign-in."
+    if "requested format is not available" in msg_lower:
+        return "The requested quality or format is not available for this video."
+    if "video unavailable" in msg_lower:
+        return "The video is unavailable or has been removed."
+    if "copyright" in msg_lower:
+        return "This video cannot be downloaded due to a copyright claim."
+
+    clean = raw_msg.strip()
+    return clean if clean else "An unknown error occurred while processing the video."
+
+
 @router.post("/info", response_model=VideoInfoResponse)
 async def get_video_info(payload: DownloadInfoRequest) -> VideoInfoResponse:
     platform = detect_platform(payload.url)
@@ -40,7 +69,10 @@ async def get_video_info(payload: DownloadInfoRequest) -> VideoInfoResponse:
             info = await get_vimeo_info(payload.url)
         return VideoInfoResponse.model_validate(info)
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Could not fetch video info: {exc}") from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=_clean_error_message(exc),
+        ) from exc
 
 
 @router.post("/start", response_model=DownloadStartResponse)
@@ -93,7 +125,10 @@ async def start_download(
             thumbnail=result.get("thumbnail"),
         )
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Download failed: {exc}") from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=_clean_error_message(exc),
+        ) from exc
 
 
 @router.get("/file/{job_id}", name="serve_file")
