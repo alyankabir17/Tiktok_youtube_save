@@ -43,8 +43,8 @@ async def register(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=60 * 60 * 24,
     )
     return TokenResponse(access_token=token, user=_to_user_response(user))
@@ -65,8 +65,8 @@ async def login(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=60 * 60 * 24,
     )
     return TokenResponse(access_token=token, user=_to_user_response(user))
