@@ -19,8 +19,11 @@ def _get_cookie_file_path() -> str | None:
     if cookies_raw and cookies_raw.strip():
         tmp_cookie_path = TEMP_DIR / "youtube_cookies.txt"
         try:
+            content = cookies_raw.strip().replace("\\n", "\n")
+            if not content.startswith("# Netscape"):
+                content = "# Netscape HTTP Cookie File\n" + content
             with open(tmp_cookie_path, "w", encoding="utf-8") as f:
-                f.write(cookies_raw.strip())
+                f.write(content)
             return str(tmp_cookie_path)
         except Exception:
             pass
@@ -44,7 +47,7 @@ def _build_youtube_opts(extra_opts: dict | None = None) -> dict:
         },
         "extractor_args": {
             "youtube": {
-                "player_client": ["ios", "mweb", "android", "web", "tv"]
+                "player_client": ["mweb", "android", "tvhtml5", "web"]
             }
         }
     }
