@@ -53,3 +53,8 @@ backend/venv
 venv
 env
 .venv
+
+# Sensitive files
+cookies.txt
+*.cookies
+

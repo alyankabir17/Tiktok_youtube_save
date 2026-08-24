@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
-    ALLOWED_ORIGINS: list[str] = Field(default_factory=lambda: [
+    ALLOWED_ORIGINS: list[str] | str | Any = Field(default_factory=lambda: [
         "http://localhost:3000",
         "http://localhost:3001",
     ])
@@ -44,9 +44,12 @@ class Settings(BaseSettings):
             if not stripped:
                 return ["http://localhost:3000"]
             if stripped.startswith("["):
-                parsed = json.loads(stripped)
-                if isinstance(parsed, list):
-                    return [str(v).strip() for v in parsed if str(v).strip()]
+                try:
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, list):
+                        return [str(v).strip() for v in parsed if str(v).strip()]
+                except Exception:
+                    pass
             return [v.strip() for v in stripped.split(",") if v.strip()]
         return ["http://localhost:3000"]
 
