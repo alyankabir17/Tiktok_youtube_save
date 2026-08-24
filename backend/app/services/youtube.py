@@ -47,7 +47,7 @@ def _build_youtube_opts(extra_opts: dict | None = None) -> dict:
         },
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "android_vr", "tvhtml5", "mweb"]
+                "player_client": ["tvhtml5", "android", "android_vr"]
             }
         }
     }
