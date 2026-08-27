@@ -1,9 +1,9 @@
 FROM python:3.11.9-slim
 
-# Install FFmpeg (required by yt-dlp)
+# Install FFmpeg and Node.js (required by yt-dlp for signature & JS challenge solving)
 RUN apt-get update \
 	&& apt-get upgrade -y \
-	&& apt-get install -y --no-install-recommends ffmpeg ca-certificates \
+	&& apt-get install -y --no-install-recommends ffmpeg ca-certificates nodejs curl \
 	&& rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
