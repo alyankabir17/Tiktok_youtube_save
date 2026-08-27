@@ -25,7 +25,6 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
       setUrl(text);
       const detected = detectPlatform(text);
       if (detected && detected !== platform) {
-        if (detected === "tiktok") navigate("/");
         if (detected === "tiktok") navigate("/tiktok");
         else if (detected === "youtube") navigate("/youtube");
         else if (detected === "instagram") navigate("/instagram");
@@ -42,7 +41,6 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
     setUrl(value);
     const detected = detectPlatform(value);
     if (detected && detected !== platform) {
-      if (detected === "tiktok") navigate("/");
       if (detected === "tiktok") navigate("/tiktok");
       else if (detected === "youtube") navigate("/youtube");
       else if (detected === "instagram") navigate("/instagram");
