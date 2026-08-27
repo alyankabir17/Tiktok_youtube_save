@@ -22,13 +22,9 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] | str | Any = Field(default_factory=lambda: [
         "http://localhost:3000",
         "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "https://*.vercel.app",
     ])
 
     TEMP_DIR: str = "/tmp/downloads"
-    CLEANUP_DELAY_SECONDS: int = 3600
     MAX_DOWNLOAD_SIZE_MB: int = 500
     ANON_RATE_LIMIT_PER_HOUR: int = 30
     AUTH_RATE_LIMIT_PER_HOUR: int = 120
