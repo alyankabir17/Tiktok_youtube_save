@@ -1,13 +1,21 @@
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 
+interface TabItem {
+  href: string;
+  match: string[];
+  label: string;
+  color: string;
+}
+
+const tabs: TabItem[] = [
+  { href: "/tiktok", match: ["/", "/tiktok"], label: "TikTok", color: "#ff0050" },
+  { href: "/youtube", match: ["/youtube"], label: "YouTube", color: "#ff0000" },
+  { href: "/instagram", match: ["/instagram"], label: "Instagram", color: "#E1306C" },
+];
+
 export function PlatformTabs() {
   const [location] = useLocation();
-  const tabs = [
-    { href: "/tiktok", match: ["/", "/tiktok"], label: "TikTok", color: "#ff0050" },
-    { href: "/youtube", match: ["/youtube"], label: "YouTube", color: "#ff0000" },
-    { href: "/instagram", match: ["/instagram"], label: "Instagram", color: "#E1306C" },
-  ];
 
   return (
     <div className="inline-flex items-center gap-1 p-1 rounded-full border border-border/40 bg-card/60 backdrop-blur-md">
