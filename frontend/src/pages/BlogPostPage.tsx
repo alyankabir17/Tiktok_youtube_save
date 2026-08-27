@@ -16,7 +16,6 @@ export default function BlogPostPage() {
   const slug = params?.slug ?? "";
   const { data, isLoading, error } = useGetBlogPost(slug, {
     enabled: !!slug,
-    queryKey: getGetBlogPostQueryKey(slug),
   });
   const { data: allPosts } = useListBlogPosts();
 

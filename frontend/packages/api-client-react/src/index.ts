@@ -1,6 +1,6 @@
 import { useMutation, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 
-export type Platform = "tiktok" | "youtube" | "vimeo";
+export type Platform = "tiktok" | "youtube" | "vimeo" | "instagram";
 
 export interface VideoFormatOption {
   id: string;
@@ -34,6 +34,7 @@ export interface DownloadStats {
   totalDownloads: number;
   tiktokDownloads: number;
   youtubeDownloads: number;
+  instagramDownloads?: number;
   downloadsToday: number;
 }
 
@@ -148,16 +149,19 @@ function normalizeStats(value: {
   total_downloads?: number;
   tiktok_downloads?: number;
   youtube_downloads?: number;
+  instagram_downloads?: number;
   downloads_today?: number;
   totalDownloads?: number;
   tiktokDownloads?: number;
   youtubeDownloads?: number;
+  instagramDownloads?: number;
   downloadsToday?: number;
 }): DownloadStats {
   return {
     totalDownloads: value.totalDownloads ?? value.total_downloads ?? 0,
     tiktokDownloads: value.tiktokDownloads ?? value.tiktok_downloads ?? 0,
     youtubeDownloads: value.youtubeDownloads ?? value.youtube_downloads ?? 0,
+    instagramDownloads: value.instagramDownloads ?? value.instagram_downloads ?? 0,
     downloadsToday: value.downloadsToday ?? value.downloads_today ?? 0,
   };
 }

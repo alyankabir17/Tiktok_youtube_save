@@ -26,7 +26,9 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
       const detected = detectPlatform(text);
       if (detected && detected !== platform) {
         if (detected === "tiktok") navigate("/");
+        if (detected === "tiktok") navigate("/tiktok");
         else if (detected === "youtube") navigate("/youtube");
+        else if (detected === "instagram") navigate("/instagram");
         else navigate("/vimeo");
         return;
       }
@@ -41,7 +43,9 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
     const detected = detectPlatform(value);
     if (detected && detected !== platform) {
       if (detected === "tiktok") navigate("/");
+      if (detected === "tiktok") navigate("/tiktok");
       else if (detected === "youtube") navigate("/youtube");
+      else if (detected === "instagram") navigate("/instagram");
       else navigate("/vimeo");
     }
   };
@@ -65,6 +69,8 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
             background:
               platform === "tiktok"
                 ? "conic-gradient(from var(--angle, 0deg), #ff0050, #8b5cf6, #06b6d4, #ff0050)"
+                : platform === "instagram"
+                ? "conic-gradient(from var(--angle, 0deg), #f09433, #e6683c, #dc2743, #cc2366, #bc1888, #f09433)"
                 : platform === "vimeo"
                 ? "conic-gradient(from var(--angle, 0deg), #1ab7ea, #0f5f7a, #06b6d4, #1ab7ea)"
                 : "conic-gradient(from var(--angle, 0deg), #ff0000, #f59e0b, #8b5cf6, #ff0000)",
@@ -82,6 +88,8 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
             placeholder={
               platform === "tiktok"
                 ? "Paste a TikTok link, e.g. https://www.tiktok.com/@user/video/..."
+                : platform === "instagram"
+                ? "Paste an Instagram link, e.g. https://www.instagram.com/reel/..."
                 : platform === "vimeo"
                 ? "Paste a Vimeo link, e.g. https://vimeo.com/123456789"
                 : "Paste a YouTube link, e.g. https://youtube.com/watch?v=..."

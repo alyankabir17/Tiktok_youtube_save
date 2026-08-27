@@ -14,8 +14,9 @@ class DownloadInfoRequest(BaseModel):
         # Auto-add https:// if missing
         if not v.startswith("http"):
             v = "https://" + v
-        if not ("tiktok.com" in v or "youtube.com" in v or "youtu.be" in v or "vimeo.com" in v):
-            raise ValueError("Only TikTok, YouTube, and Vimeo URLs are supported")
+        v_lower = v.lower()
+        if not ("tiktok.com" in v_lower or "youtube.com" in v_lower or "youtu.be" in v_lower or "vimeo.com" in v_lower or "instagram.com" in v_lower or "instagr.am" in v_lower):
+            raise ValueError("Only TikTok, YouTube, Vimeo, and Instagram URLs are supported")
         return v
 
 
@@ -118,6 +119,7 @@ class DownloadStatsResponse(BaseModel):
     total_downloads: int = Field(alias="totalDownloads")
     tiktok_downloads: int = Field(alias="tiktokDownloads")
     youtube_downloads: int = Field(alias="youtubeDownloads")
+    instagram_downloads: int = Field(default=0, alias="instagramDownloads")
     downloads_today: int = Field(alias="downloadsToday")
 
     model_config = ConfigDict(populate_by_name=True)

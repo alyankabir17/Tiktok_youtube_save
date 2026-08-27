@@ -82,16 +82,19 @@ async def get_download_stats(db: AsyncSession) -> dict[str, int]:
     total_query = select(func.count(DownloadHistory.id))
     tiktok_query = select(func.count(DownloadHistory.id)).where(DownloadHistory.platform == "tiktok")
     youtube_query = select(func.count(DownloadHistory.id)).where(DownloadHistory.platform == "youtube")
+    instagram_query = select(func.count(DownloadHistory.id)).where(DownloadHistory.platform == "instagram")
     today_query = select(func.count(DownloadHistory.id)).where(DownloadHistory.downloaded_at >= today_start)
 
     total = int((await db.execute(total_query)).scalar() or 0)
     tiktok = int((await db.execute(tiktok_query)).scalar() or 0)
     youtube = int((await db.execute(youtube_query)).scalar() or 0)
+    instagram = int((await db.execute(instagram_query)).scalar() or 0)
     today = int((await db.execute(today_query)).scalar() or 0)
 
     return {
         "totalDownloads": total,
         "tiktokDownloads": tiktok,
         "youtubeDownloads": youtube,
+        "instagramDownloads": instagram,
         "downloadsToday": today,
     }

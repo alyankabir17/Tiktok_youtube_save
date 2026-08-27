@@ -14,9 +14,16 @@ import { toast } from "sonner";
 const NAV = [
   { href: "/", label: "TikTok" },
   { href: "/youtube", label: "YouTube" },
+  { href: "/instagram", label: "Instagram" },
   { href: "/vimeo", label: "Vimeo" },
   { href: "/blog", label: "Blog" },
   { href: "/history", label: "History" },
+  { href: "/tiktok", match: ["/", "/tiktok"], label: "TikTok" },
+  { href: "/youtube", match: ["/youtube"], label: "YouTube" },
+  { href: "/instagram", match: ["/instagram"], label: "Instagram" },
+  { href: "/vimeo", match: ["/vimeo"], label: "Vimeo" },
+  { href: "/blog", match: ["/blog"], label: "Blog" },
+  { href: "/history", match: ["/history"], label: "History" },
 ];
 
 export function Header() {
@@ -51,6 +58,7 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-1">
           {NAV.map((item) => {
             const active = location === item.href;
+            const active = item.match ? item.match.includes(location) : location === item.href;
             return (
               <Link
                 key={item.href}

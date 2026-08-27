@@ -1,12 +1,14 @@
 import asyncio
 import os
 import uuid
+import logging
 from pathlib import Path
-
 import yt_dlp
 
 from app.config import settings
+from app.utils.cookie_helper import get_platform_cookie_file
 
+logger = logging.getLogger(__name__)
 
 TEMP_DIR = Path(settings.TEMP_DIR)
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -17,7 +19,16 @@ def _sanitize_filename(title: str, fallback: str) -> str:
     return clean[:100] or fallback
 
 
-def _build_opts(file_format: str, output_path: str) -> dict:
+def _get_cookie_file_path() -> str | None:
+    return get_platform_cookie_file(
+        platform="tiktok",
+        cookie_file_setting=getattr(settings, "TIKTOK_COOKIE_FILE", None),
+        cookie_env_raw=os.getenv("TIKTOK_COOKIES"),
+        candidate_filenames=["tiktok_cookies.txt", "cookies.txt", "../cookies.txt"],
+    )
+
+
+def _build_opts(file_format: str, output_path: str, use_cookies: bool = True) -> dict:
     opts = {
         "outtmpl": output_path,
         "noplaylist": True,
@@ -25,13 +36,16 @@ def _build_opts(file_format: str, output_path: str) -> dict:
         "no_warnings": True,
         "retries": 3,
         "fragment_retries": 3,
+        "nocheckcertificate": True,
         "http_headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
     }
 
-    if settings.TIKTOK_COOKIE_FILE and os.path.exists(settings.TIKTOK_COOKIE_FILE):
-        opts["cookiefile"] = settings.TIKTOK_COOKIE_FILE
+    if use_cookies:
+        cookie_file = _get_cookie_file_path()
+        if cookie_file:
+            opts["cookiefile"] = cookie_file
 
     if file_format == "mp3":
         opts.update(
@@ -58,16 +72,20 @@ def _build_opts(file_format: str, output_path: str) -> dict:
 
 
 async def get_tiktok_info(url: str) -> dict:
-    opts = {
-        "quiet": True,
-        "no_warnings": True,
-        "skip_download": True,
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-    }
-
     def _extract() -> dict:
+        cookie_file = _get_cookie_file_path()
+        opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "nocheckcertificate": True,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            },
+        }
+        if cookie_file:
+            opts["cookiefile"] = cookie_file
+
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
             return {
