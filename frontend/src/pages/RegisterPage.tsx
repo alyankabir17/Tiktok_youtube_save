@@ -39,9 +39,10 @@ export default function RegisterPage() {
       await register.mutateAsync({
         data: { email, password, username: username || undefined },
       });
-      queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+      await queryClient.refetchQueries({ queryKey: getGetCurrentUserQueryKey() });
       toast.success("Account created. Welcome to VideoSave.");
-      navigate("/");
+      navigate("/history");
     } catch (e) {
       const msg =
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??

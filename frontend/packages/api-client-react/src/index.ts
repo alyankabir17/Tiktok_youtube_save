@@ -104,18 +104,43 @@ function mapError(status: number, detail: unknown, fallback: string): Error {
   return err;
 }
 
+export function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("videosave_token") || localStorage.getItem("accessToken") || localStorage.getItem("token");
+}
+
+export function setStoredToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) {
+    localStorage.setItem("videosave_token", token);
+  } else {
+    localStorage.removeItem("videosave_token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
+  }
+}
+
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getStoredToken();
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
   const res = await fetch(toApiUrl(path), {
     ...init,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...(init?.headers || {}),
     },
   });
 
   const raw = await res.text();
-  const data = raw ? (JSON.parse(raw) as unknown) : undefined;
+  let data: unknown = undefined;
+  try {
+    data = raw ? JSON.parse(raw) : undefined;
+  } catch {
+    data = raw;
+  }
 
   if (!res.ok) {
     throw mapError(res.status, data, `Request failed with status ${res.status}`);
@@ -281,7 +306,11 @@ export function useLogin() {
         method: "POST",
         body: JSON.stringify(data),
       });
-      return normalizeTokenResponse(result);
+      const normalized = normalizeTokenResponse(result);
+      if (normalized.accessToken) {
+        setStoredToken(normalized.accessToken);
+      }
+      return normalized;
     },
   });
 }
@@ -301,7 +330,11 @@ export function useRegister() {
         method: "POST",
         body: JSON.stringify(data),
       });
-      return normalizeTokenResponse(result);
+      const normalized = normalizeTokenResponse(result);
+      if (normalized.accessToken) {
+        setStoredToken(normalized.accessToken);
+      }
+      return normalized;
     },
   });
 }
@@ -309,6 +342,7 @@ export function useRegister() {
 export function useLogout() {
   return useMutation({
     mutationFn: async () => {
+      setStoredToken(null);
       return apiRequest<{ success: boolean }>("/api/auth/logout", {
         method: "POST",
       });

@@ -17,8 +17,13 @@ async def get_optional_current_user(
     token: str | None = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User | None:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    header_token = None
+    if auth_header and auth_header.lower().startswith("bearer "):
+        header_token = auth_header[7:].strip()
+
     cookie_token = request.cookies.get("access_token")
-    resolved_token = token or cookie_token
+    resolved_token = header_token or token or cookie_token
 
     if not resolved_token:
         return None
