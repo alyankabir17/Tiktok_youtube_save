@@ -6,9 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import HomePage from "@/pages/HomePage";
+import TikTokPage from "@/pages/TikTokPage";
 import YouTubePage from "@/pages/YouTubePage";
 import InstagramPage from "@/pages/InstagramPage";
-import VimeoPage from "@/pages/VimeoPage";
 import HistoryPage from "@/pages/HistoryPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
@@ -26,9 +26,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/tiktok" component={TikTokPage} />
       <Route path="/youtube" component={YouTubePage} />
       <Route path="/instagram" component={InstagramPage} />
-      <Route path="/vimeo" component={VimeoPage} />
       <Route path="/history" component={HistoryPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/register" component={RegisterPage} />

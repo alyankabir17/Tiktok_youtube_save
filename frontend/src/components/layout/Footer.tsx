@@ -21,10 +21,9 @@ export function Footer() {
           <div>
             <h4 className="font-display text-sm font-semibold mb-3">Tools</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/" className="hover:text-foreground">TikTok Downloader</Link></li>
+              <li><Link href="/tiktok" className="hover:text-foreground">TikTok Downloader</Link></li>
               <li><Link href="/youtube" className="hover:text-foreground">YouTube Downloader</Link></li>
               <li><Link href="/instagram" className="hover:text-foreground">Instagram Downloader</Link></li>
-              <li><Link href="/vimeo" className="hover:text-foreground">Vimeo Downloader</Link></li>
               <li><Link href="/history" className="hover:text-foreground">Download History</Link></li>
             </ul>
           </div>

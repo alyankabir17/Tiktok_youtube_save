@@ -15,7 +15,6 @@ const NAV = [
   { href: "/tiktok", match: ["/", "/tiktok"], label: "TikTok" },
   { href: "/youtube", match: ["/youtube"], label: "YouTube" },
   { href: "/instagram", match: ["/instagram"], label: "Instagram" },
-  { href: "/vimeo", match: ["/vimeo"], label: "Vimeo" },
   { href: "/blog", match: ["/blog"], label: "Blog" },
   { href: "/history", match: ["/history"], label: "History" },
 ];

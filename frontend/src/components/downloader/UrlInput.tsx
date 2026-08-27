@@ -28,7 +28,6 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
         if (detected === "tiktok") navigate("/tiktok");
         else if (detected === "youtube") navigate("/youtube");
         else if (detected === "instagram") navigate("/instagram");
-        else navigate("/vimeo");
         return;
       }
       inputRef.current?.focus();
@@ -44,7 +43,6 @@ export function UrlInput({ platform, onSubmit, loading, error, initialUrl = "" }
       if (detected === "tiktok") navigate("/tiktok");
       else if (detected === "youtube") navigate("/youtube");
       else if (detected === "instagram") navigate("/instagram");
-      else navigate("/vimeo");
     }
   };
 
