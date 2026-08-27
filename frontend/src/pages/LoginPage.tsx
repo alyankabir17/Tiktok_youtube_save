@@ -27,9 +27,8 @@ export default function LoginPage() {
     setErr(null);
     try {
       await login.mutateAsync({ data: { email, password } });
-      await queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
-      await queryClient.refetchQueries({ queryKey: getGetCurrentUserQueryKey() });
-      await queryClient.invalidateQueries({ queryKey: getListHistoryQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getListHistoryQueryKey() });
       toast.success("Welcome back.");
       navigate("/history");
     } catch (e) {

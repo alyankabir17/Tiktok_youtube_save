@@ -3,7 +3,11 @@ import os
 import uuid
 import logging
 from pathlib import Path
-import yt_dlp
+
+try:
+    import yt_dlp
+except ImportError:  # pragma: no cover - optional dependency is installed in runtime env
+    yt_dlp = None
 
 from app.config import settings
 from app.utils.cookie_helper import get_platform_cookie_file
@@ -12,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 TEMP_DIR = Path(settings.TEMP_DIR)
 TEMP_DIR.mkdir(exist_ok=True, parents=True)
+
+
+def _require_yt_dlp():
+    if yt_dlp is None:
+        raise RuntimeError("yt-dlp is not installed. Please install the dependencies for the backend environment.")
 
 
 def _get_cookie_file_path() -> str | None:
