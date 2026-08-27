@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useDownload } from "@/lib/hooks/useDownload";
 import { UrlInput } from "./UrlInput";
 import { VideoCard } from "./VideoCard";
+import { FetchingCard } from "./FetchingCard";
 import { PlatformTabs } from "./PlatformTabs";
 import { StatsStrip } from "./StatsStrip";
 import { HowItWorks } from "./HowItWorks";
@@ -76,7 +77,13 @@ export function Downloader({ platform, eyebrow, title, subtitle }: Props) {
             error={dl.error}
           />
 
-          {dl.videoInfo && (
+          {dl.isFetchingInfo && (
+            <div className="mt-6">
+              <FetchingCard platform={platform} />
+            </div>
+          )}
+
+          {dl.videoInfo && !dl.isFetchingInfo && (
             <div className="mt-6">
               <VideoCard
                 info={dl.videoInfo}
