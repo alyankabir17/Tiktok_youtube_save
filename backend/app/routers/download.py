@@ -101,7 +101,8 @@ async def start_download(
         else:
             result = await download_vimeo(payload.url, payload.format, payload.quality)
 
-        schedule_cleanup(result["file_path"], delay=settings.CLEANUP_DELAY_SECONDS)
+        cleanup_delay = getattr(settings, "CLEANUP_DELAY_SECONDS", 3600)
+        schedule_cleanup(result["file_path"], delay=cleanup_delay)
 
         if user:
             ip = request.client.host if request.client else None

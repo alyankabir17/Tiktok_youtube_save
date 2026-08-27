@@ -23,8 +23,8 @@ def _get_cookie_file_path() -> str | None:
     )
 
 
-def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = True, player_clients: list[str] | None = None) -> dict:
-    clients = player_clients or ["android", "ios", "mweb", "web"]
+def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
+    clients = player_clients or ["android", "ios"]
     
     extractor_youtube = {
         "player_client": clients,
@@ -106,12 +106,14 @@ def _extract_quality_options(info: dict) -> list[dict]:
 async def get_youtube_info(url: str) -> dict:
     def _extract_with_fallback():
         strategies = [
-            # 1. Primary with cookies (if available) & modern clients
-            {"use_cookies": True, "player_clients": ["android", "ios", "mweb", "web"]},
-            # 2. Fallback without cookies & mobile clients
-            {"use_cookies": False, "player_clients": ["android", "ios", "mweb"]},
-            # 3. Fallback with iOS/Android
-            {"use_cookies": False, "player_clients": ["ios", "android"]},
+            # 1. Primary mobile clients (android, ios - bypasses datacenter bot detection)
+            {"use_cookies": False, "player_clients": ["android", "ios"]},
+            # 2. Android alone
+            {"use_cookies": False, "player_clients": ["android"]},
+            # 3. Cookies (if provided for age-gated media)
+            {"use_cookies": True, "player_clients": ["android", "ios"]},
+            # 4. iOS / mweb fallback
+            {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 
         last_error = None
@@ -187,9 +189,10 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
 
     def _download_with_fallback():
         strategies = [
-            {"use_cookies": True, "player_clients": ["android", "ios", "mweb", "web"]},
-            {"use_cookies": False, "player_clients": ["android", "ios", "mweb"]},
-            {"use_cookies": False, "player_clients": ["ios", "android"]},
+            {"use_cookies": False, "player_clients": ["android", "ios"]},
+            {"use_cookies": False, "player_clients": ["android"]},
+            {"use_cookies": True, "player_clients": ["android", "ios"]},
+            {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 
         last_error = None
