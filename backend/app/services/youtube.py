@@ -110,9 +110,11 @@ async def get_youtube_info(url: str) -> dict:
             {"use_cookies": False, "player_clients": ["android", "ios"]},
             # 2. Android alone
             {"use_cookies": False, "player_clients": ["android"]},
-            # 3. Cookies (if provided for age-gated media)
+            # 3. Web Safari & iOS fallback
+            {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
+            # 4. Cookies (if provided for age-gated media)
             {"use_cookies": True, "player_clients": ["android", "ios"]},
-            # 4. iOS / mweb fallback
+            # 5. iOS / mweb fallback
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 
@@ -191,6 +193,7 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
         strategies = [
             {"use_cookies": False, "player_clients": ["android", "ios"]},
             {"use_cookies": False, "player_clients": ["android"]},
+            {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
             {"use_cookies": True, "player_clients": ["android", "ios"]},
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
