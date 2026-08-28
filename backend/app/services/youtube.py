@@ -33,7 +33,7 @@ def _get_cookie_file_path() -> str | None:
 
 
 def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
-    clients = player_clients or ["android_creator", "android", "ios"]
+    clients = player_clients or ["android"]
     
     extractor_youtube = {
         "player_client": clients,
