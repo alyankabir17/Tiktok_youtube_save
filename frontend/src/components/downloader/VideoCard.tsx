@@ -28,12 +28,28 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
     () => (info.formats || []).filter((f) => f.format === format),
     [info.formats, format],
   );
-  const [quality, setQuality] = useState<string>(filtered[0]?.quality ?? "");
+  const [quality, setQuality] = useState<string>(() => {
+    const list = (info.formats || []).filter((f) => f.format === "mp4");
+    return list.find((f) => f.quality === "1080p")?.quality ||
+           list.find((f) => f.quality === "720p")?.quality ||
+           list[0]?.quality || "";
+  });
+
+  // Sync quality whenever video info or format changes
+  useEffect(() => {
+    const list = (info.formats || []).filter((f) => f.format === format);
+    if (list.length > 0) {
+      const topQuality =
+        list.find((f) => f.quality === "1080p")?.quality ||
+        list.find((f) => f.quality === "720p")?.quality ||
+        list.find((f) => f.quality === "320")?.quality ||
+        list[0].quality;
+      setQuality(topQuality);
+    }
+  }, [info, format]);
 
   const handleFormatChange = (next: "mp4" | "mp3") => {
     setFormat(next);
-    const newOpts = (info.formats || []).filter((f) => f.format === next);
-    setQuality(newOpts[0]?.quality ?? "");
   };
 
   const accent =
