@@ -33,6 +33,7 @@ def _get_cookie_file_path() -> str | None:
 
 
 def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
+    clients = player_clients or ["android_creator", "android", "ios"]
     clients = player_clients or ["android"]
     
     extractor_youtube = {
@@ -136,17 +137,10 @@ def _extract_quality_options(info: dict) -> list[dict]:
 async def get_youtube_info(url: str) -> dict:
     def _extract_with_fallback():
         strategies = [
-            # 1. Primary mobile clients (bypasses datacenter bot detection)
-            {"use_cookies": False, "player_clients": ["android_creator", "android", "ios"]},
-            # 2. Android creator alone
-            {"use_cookies": False, "player_clients": ["android_creator"]},
-            # 3. Android alone
             {"use_cookies": False, "player_clients": ["android"]},
-            # 4. Web Safari & iOS fallback
-            {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
-            # 5. Cookies (if provided)
-            {"use_cookies": True, "player_clients": ["android_creator", "android", "ios"]},
-            # 6. iOS / mweb fallback
+            {"use_cookies": False, "player_clients": ["android_creator", "android"]},
+            {"use_cookies": False, "player_clients": ["web_safari", "android"]},
+            {"use_cookies": True, "player_clients": ["android"]},
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 
@@ -225,11 +219,10 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
 
     def _download_with_fallback():
         strategies = [
-            {"use_cookies": False, "player_clients": ["android_creator", "android", "ios"]},
-            {"use_cookies": False, "player_clients": ["android_creator"]},
             {"use_cookies": False, "player_clients": ["android"]},
-            {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
-            {"use_cookies": True, "player_clients": ["android_creator", "android", "ios"]},
+            {"use_cookies": False, "player_clients": ["android_creator", "android"]},
+            {"use_cookies": False, "player_clients": ["web_safari", "android"]},
+            {"use_cookies": True, "player_clients": ["android"]},
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 
