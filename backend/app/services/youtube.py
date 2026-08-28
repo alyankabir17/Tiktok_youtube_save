@@ -65,6 +65,10 @@ def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = Fals
         if cookie_file:
             opts["cookiefile"] = cookie_file
 
+    proxy = getattr(settings, "YOUTUBE_PROXY", None) or os.getenv("YOUTUBE_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
+    if proxy and proxy.strip():
+        opts["proxy"] = proxy.strip()
+
     if extra_opts:
         opts.update(extra_opts)
 
