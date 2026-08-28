@@ -80,19 +80,6 @@ async def get_video_info(payload: DownloadInfoRequest) -> VideoInfoResponse:
         ) from exc
 
 
-from app.services.progress_manager import create_job, update_progress, get_progress
-from app.models.schemas import (
-    DownloadInfoRequest,
-    DownloadStartRequest,
-    DownloadStartResponse,
-    DownloadStatsResponse,
-    VideoInfoResponse,
-    DownloadProgressResponse,
-)
-from fastapi.responses import FileResponse, StreamingResponse
-import json
-import asyncio
-
 @router.post("/start", response_model=DownloadStartResponse)
 async def start_download(
     payload: DownloadStartRequest,
@@ -104,15 +91,11 @@ async def start_download(
     if not platform:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported URL")
 
-    job_id = payload.job_id or str(uuid.uuid4())
-    create_job(job_id)
-    update_progress(job_id, {"status": "downloading", "stage": "Connecting to media stream..."})
-
     try:
         if platform == "tiktok":
             result = await download_tiktok(payload.url, payload.format, payload.quality)
         elif platform == "youtube":
-            result = await download_youtube(payload.url, payload.format, payload.quality, custom_job_id=job_id)
+            result = await download_youtube(payload.url, payload.format, payload.quality)
         elif platform == "instagram":
             result = await download_instagram(payload.url, payload.format, payload.quality)
         else:
@@ -141,17 +124,6 @@ async def start_download(
         encoded_name = quote(result["filename"])
         download_url = f"{base_download_url}?filename={encoded_name}"
 
-        update_progress(job_id, {
-            "status": "done",
-            "percent": 100.0,
-            "speed": "Done",
-            "eta": "00:00",
-            "stage": "Ready!",
-            "download_url": str(download_url),
-            "filename": result["filename"],
-            "file_size": result.get("file_size"),
-        })
-
         return DownloadStartResponse(
             job_id=result["job_id"],
             download_url=str(download_url),
@@ -161,47 +133,10 @@ async def start_download(
             thumbnail=result.get("thumbnail"),
         )
     except Exception as exc:
-        err_msg = _clean_error_message(exc)
-        update_progress(job_id, {
-            "status": "error",
-            "error": err_msg,
-            "stage": f"Error: {err_msg}",
-        })
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=err_msg,
+            detail=_clean_error_message(exc),
         ) from exc
-
-
-@router.get("/progress/{job_id}", response_model=DownloadProgressResponse)
-async def get_download_progress(job_id: str) -> DownloadProgressResponse:
-    prog = get_progress(job_id)
-    if not prog:
-        return DownloadProgressResponse(
-            jobId=job_id,
-            status="starting",
-            percent=0.0,
-            speed="--",
-            eta="--",
-            downloaded="0 B",
-            total="--",
-            stage="Initializing stream...",
-        )
-    return DownloadProgressResponse.model_validate(prog)
-
-
-@router.get("/events/{job_id}")
-async def download_events(job_id: str):
-    async def event_generator():
-        while True:
-            prog = get_progress(job_id)
-            if prog:
-                yield f"data: {json.dumps(prog)}\n\n"
-                if prog.get("status") in ("done", "error"):
-                    break
-            await asyncio.sleep(0.25)
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.get("/file/{job_id}", name="serve_file")
