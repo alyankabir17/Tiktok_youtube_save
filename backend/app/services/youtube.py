@@ -33,7 +33,7 @@ def _get_cookie_file_path() -> str | None:
 
 
 def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
-    clients = player_clients or ["android", "ios"]
+    clients = player_clients or ["android_creator", "android", "ios"]
     
     extractor_youtube = {
         "player_client": clients,
@@ -67,7 +67,15 @@ def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = Fals
 
     proxy = getattr(settings, "YOUTUBE_PROXY", None) or os.getenv("YOUTUBE_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
     if proxy and proxy.strip():
-        opts["proxy"] = proxy.strip()
+        proxy_str = proxy.strip()
+        # Auto-correct Webshare rotating username if user forgot "-rotate"
+        if "p.webshare.io" in proxy_str and "-rotate" not in proxy_str and "@" in proxy_str:
+            parts = proxy_str.split("@", 1)
+            creds = parts[0]
+            if ":" in creds:
+                scheme_user, pwd = creds.rsplit(":", 1)
+                proxy_str = f"{scheme_user}-rotate:{pwd}@{parts[1]}"
+        opts["proxy"] = proxy_str
 
     if extra_opts:
         opts.update(extra_opts)
