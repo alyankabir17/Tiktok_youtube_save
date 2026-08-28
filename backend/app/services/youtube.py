@@ -184,10 +184,48 @@ async def get_youtube_info(url: str) -> dict:
     return await asyncio.to_thread(_extract_with_fallback)
 
 
-async def download_youtube(url: str, format: str, quality: str) -> dict:
-    job_id = str(uuid.uuid4())
+import re
+from app.services.progress_manager import update_progress
+
+async def download_youtube(url: str, format: str, quality: str, custom_job_id: str | None = None) -> dict:
+    job_id = custom_job_id or str(uuid.uuid4())
     fmt_lower = format.lower()
     output_template = str(TEMP_DIR / f"{job_id}.%(ext)s")
+
+    def _make_progress_hook(jid: str):
+        def _hook(d: dict):
+            st = d.get("status")
+            if st == "downloading":
+                downloaded = d.get("downloaded_bytes") or 0
+                total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+                percent = round((downloaded / total * 100), 1) if total > 0 else 0.0
+
+                speed_str = d.get("_speed_str") or "--"
+                eta_str = d.get("_eta_str") or "--"
+                dl_str = d.get("_downloaded_bytes_str") or "--"
+                total_str = d.get("_total_bytes_str") or d.get("_total_bytes_estimate_str") or "--"
+
+                speed_clean = re.sub(r"\x1b\[[0-9;]*m", "", str(speed_str)).strip()
+                eta_clean = re.sub(r"\x1b\[[0-9;]*m", "", str(eta_str)).strip()
+                dl_clean = re.sub(r"\x1b\[[0-9;]*m", "", str(dl_str)).strip()
+                total_clean = re.sub(r"\x1b\[[0-9;]*m", "", str(total_str)).strip()
+
+                update_progress(jid, {
+                    "status": "downloading",
+                    "percent": percent,
+                    "speed": speed_clean,
+                    "eta": eta_clean,
+                    "downloaded": dl_clean,
+                    "total": total_clean,
+                    "stage": f"Downloading: {percent}% of {total_clean}",
+                })
+            elif st == "finished":
+                update_progress(jid, {
+                    "status": "merging",
+                    "percent": 95.0,
+                    "stage": "Merging video and audio with FFmpeg...",
+                })
+        return _hook
 
     audio_targets = ["mp3", "m4a", "wav", "flac", "aac", "opus", "ogg"]
     if fmt_lower == "mp3" or fmt_lower in audio_targets or quality.lower() in audio_targets:
@@ -197,6 +235,7 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
         download_opts = {
             "outtmpl": output_template,
             "format": "bestaudio/best",
+            "progress_hooks": [_make_progress_hook(job_id)],
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": codec,
@@ -221,15 +260,15 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
             "outtmpl": output_template,
             "format": format_spec,
             "merge_output_format": ext,
+            "progress_hooks": [_make_progress_hook(job_id)],
         }
 
     def _download_with_fallback():
         strategies = [
-            {"use_cookies": False, "player_clients": ["android_creator", "android", "ios"]},
-            {"use_cookies": False, "player_clients": ["android_creator"]},
             {"use_cookies": False, "player_clients": ["android"]},
-            {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
-            {"use_cookies": True, "player_clients": ["android_creator", "android", "ios"]},
+            {"use_cookies": False, "player_clients": ["android_creator", "android"]},
+            {"use_cookies": False, "player_clients": ["web_safari", "android"]},
+            {"use_cookies": True, "player_clients": ["android"]},
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 

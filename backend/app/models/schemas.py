@@ -43,6 +43,9 @@ class DownloadStartRequest(BaseModel):
     url: str
     format: str
     quality: str
+    job_id: str | None = Field(default=None, alias="jobId")
+
+    model_config = ConfigDict(populate_by_name=True)
 
     @field_validator("format")
     @classmethod
@@ -50,6 +53,23 @@ class DownloadStartRequest(BaseModel):
         if value not in {"mp4", "mp3"}:
             raise ValueError("Format must be mp4 or mp3")
         return value
+
+
+class DownloadProgressResponse(BaseModel):
+    job_id: str = Field(alias="jobId")
+    status: str
+    percent: float
+    speed: str
+    eta: str
+    downloaded: str
+    total: str
+    stage: str
+    download_url: str | None = Field(default=None, alias="downloadUrl")
+    filename: str | None = None
+    file_size: int | None = Field(default=None, alias="fileSize")
+    error: str | None = None
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DownloadStartResponse(BaseModel):

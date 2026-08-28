@@ -10,17 +10,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { VideoInfo } from "@workspace/api-client-react";
-import type { DownloadStatus } from "@/lib/hooks/useDownload";
+import type { DownloadMetrics, DownloadStatus } from "@/lib/hooks/useDownload";
 import { formatDuration, formatNumber } from "@/lib/utils/format";
 
 interface Props {
   info: VideoInfo;
   status: DownloadStatus;
   progress: number;
+  metrics?: DownloadMetrics;
   onDownload: (format: "mp4" | "mp3", quality: string) => void;
 }
 
-export function VideoCard({ info, status, progress, onDownload }: Props) {
+export function VideoCard({ info, status, progress, metrics, onDownload }: Props) {
   const platform = info.platform;
   const [format, setFormat] = useState<"mp4" | "mp3">("mp4");
 
@@ -64,13 +65,14 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
   const isDownloading = status === "downloading";
   const isDone = status === "done";
 
-  // Dynamic progress stage label
+  // Dynamic progress stage label from live metrics or fallback
   const downloadStage = useMemo(() => {
+    if (metrics?.stage) return metrics.stage;
     if (progress < 25) return "Initializing media stream...";
     if (progress < 60) return `Processing & muxing ${format.toUpperCase()} high quality...`;
     if (progress < 90) return "Finalizing container package...";
     return "Saving file to your device...";
-  }, [progress, format]);
+  }, [metrics?.stage, progress, format]);
 
   return (
     <motion.div
@@ -197,7 +199,7 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
             </Button>
           </div>
 
-          {/* Live Downloading Progress Bar & Status Effect */}
+          {/* Live Downloading Progress Bar & Telemetry HUD */}
           <AnimatePresence>
             {isDownloading && (
               <motion.div
@@ -205,21 +207,21 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-2 pt-2"
+                className="space-y-3 pt-2"
               >
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="flex items-center gap-1.5 text-primary font-medium">
-                    <Sparkles className="h-3.5 w-3.5 animate-spin" />
-                    {downloadStage}
+                  <span className="flex items-center gap-1.5 text-primary font-medium truncate max-w-[80%]">
+                    <Sparkles className="h-3.5 w-3.5 animate-spin shrink-0" />
+                    <span className="truncate">{downloadStage}</span>
                   </span>
-                  <span className="font-bold text-foreground">{Math.round(progress)}%</span>
+                  <span className="font-bold text-foreground shrink-0">{Math.round(progress)}%</span>
                 </div>
 
                 {/* Glowing Multi-layer Progress Bar */}
                 <div className="h-2.5 w-full rounded-full bg-muted/80 overflow-hidden relative shadow-inner p-[1px]">
                   <motion.div
                     className="h-full rounded-full bg-gradient-to-r from-primary via-fuchsia-400 to-cyan-400 relative overflow-hidden"
-                    animate={{ width: `${progress}%` }}
+                    animate={{ width: `${Math.max(2, Math.min(100, progress))}%` }}
                     transition={{ duration: 0.35, ease: "easeOut" }}
                   >
                     {/* Shimmer light pulse */}
@@ -229,6 +231,34 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
                       transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
                     />
                   </motion.div>
+                </div>
+
+                {/* Real-Time Live Telemetry HUD */}
+                <div className="grid grid-cols-3 gap-2 text-xs font-mono pt-1">
+                  <div className="flex flex-col p-2 rounded-lg bg-accent/40 border border-border/40">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-400 shrink-0" /> Speed
+                    </span>
+                    <span className="font-bold text-foreground truncate mt-0.5">{metrics?.speed || "--"}</span>
+                  </div>
+
+                  <div className="flex flex-col p-2 rounded-lg bg-accent/40 border border-border/40">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                      <Film className="h-3 w-3 text-cyan-400 shrink-0" /> Transfer
+                    </span>
+                    <span className="font-bold text-foreground truncate mt-0.5">
+                      {metrics?.downloaded && metrics?.total && metrics.total !== "--"
+                        ? `${metrics.downloaded} / ${metrics.total}`
+                        : metrics?.downloaded || "Calculating..."}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col p-2 rounded-lg bg-accent/40 border border-border/40">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-emerald-400 shrink-0" /> ETA
+                    </span>
+                    <span className="font-bold text-foreground truncate mt-0.5">{metrics?.eta || "--:--"}</span>
+                  </div>
                 </div>
               </motion.div>
             )}

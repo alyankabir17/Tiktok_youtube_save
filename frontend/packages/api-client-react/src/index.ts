@@ -250,12 +250,62 @@ export function useGetDownloadInfo() {
   });
 }
 
+export interface DownloadProgress {
+  jobId: string;
+  status: "starting" | "downloading" | "merging" | "done" | "error";
+  percent: number;
+  speed: string;
+  eta: string;
+  downloaded: string;
+  total: string;
+  stage: string;
+  downloadUrl?: string | null;
+  filename?: string | null;
+  fileSize?: number | null;
+  error?: string | null;
+}
+
+export async function fetchDownloadProgress(jobId: string): Promise<DownloadProgress> {
+  const result = await apiRequest<{
+    job_id?: string;
+    jobId?: string;
+    status: string;
+    percent: number;
+    speed: string;
+    eta: string;
+    downloaded: string;
+    total: string;
+    stage: string;
+    download_url?: string | null;
+    downloadUrl?: string | null;
+    filename?: string | null;
+    file_size?: number | null;
+    fileSize?: number | null;
+    error?: string | null;
+  }>(`/api/download/progress/${jobId}`);
+
+  return {
+    jobId: result.jobId ?? result.job_id ?? jobId,
+    status: (result.status as DownloadProgress["status"]) || "starting",
+    percent: result.percent ?? 0,
+    speed: result.speed || "--",
+    eta: result.eta || "--",
+    downloaded: result.downloaded || "0 B",
+    total: result.total || "--",
+    stage: result.stage || "Processing...",
+    downloadUrl: result.downloadUrl ?? result.download_url ?? null,
+    filename: result.filename ?? null,
+    fileSize: result.fileSize ?? result.file_size ?? null,
+    error: result.error ?? null,
+  };
+}
+
 export function useStartDownload() {
   return useMutation({
     mutationFn: async ({
       data,
     }: {
-      data: { url: string; format: "mp4" | "mp3"; quality: string };
+      data: { url: string; format: "mp4" | "mp3"; quality: string; jobId?: string; job_id?: string };
     }) => {
       const result = await apiRequest<{
         job_id?: string;
@@ -269,7 +319,12 @@ export function useStartDownload() {
         thumbnail?: string | null;
       }>("/api/download/start", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          url: data.url,
+          format: data.format,
+          quality: data.quality,
+          job_id: data.jobId || data.job_id,
+        }),
       });
       return normalizeDownloadStartResponse(result);
     },

@@ -89,6 +89,7 @@ export function Downloader({ platform, eyebrow, title, subtitle }: Props) {
                 info={dl.videoInfo}
                 status={dl.status}
                 progress={dl.progress}
+                metrics={dl.metrics}
                 onDownload={handleDownload}
               />
             </div>
