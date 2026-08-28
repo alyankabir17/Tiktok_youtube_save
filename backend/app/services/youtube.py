@@ -87,39 +87,48 @@ def _extract_quality_options(info: dict) -> list[dict]:
     available_heights = set()
     for fmt in info.get("formats", []):
         h = fmt.get("height")
-        if h and fmt.get("vcodec") != "none":
+        if h and isinstance(h, int):
             available_heights.add(h)
 
-    standard_heights = [4320, 2160, 1440, 1080, 720, 480, 360, 240, 144]
+    # Standard quality resolutions to offer for every YouTube video
+    standard = [1080, 720, 480, 360]
+    high_res = [h for h in [4320, 2160, 1440] if h in available_heights]
+    all_heights = high_res + standard
+
+    seen = set()
+    ordered_heights = []
+    for h in all_heights:
+        if h not in seen:
+            seen.add(h)
+            ordered_heights.append(h)
+
+    label_map = {
+        4320: "8K Ultra HD",
+        2160: "4K Ultra HD",
+        1440: "2K Quad HD (1440p)",
+        1080: "1080p Full HD",
+        720: "720p HD",
+        480: "480p SD",
+        360: "360p Standard",
+    }
+
     quality_options = []
+    for h in ordered_heights:
+        lbl = label_map.get(h, f"{h}p")
+        quality_options.append({
+            "id": f"mp4_{h}p",
+            "label": f"MP4 {lbl}",
+            "format": "mp4",
+            "quality": f"{h}p",
+        })
 
-    combined_heights = sorted(
-        available_heights.union(set(h for h in standard_heights if any(avail <= h for avail in available_heights))),
-        reverse=True,
-    )
-
-    for height in combined_heights:
-        if height in available_heights or any(h >= height for h in available_heights):
-            label_map = {4320: "8K", 2160: "4K", 1440: "2K (1440p)"}
-            label = label_map.get(height, f"{height}p")
-            quality_options.append({
-                "id": f"mp4_{height}p",
-                "label": f"MP4 {label}",
-                "format": "mp4",
-                "quality": f"{height}p",
-            })
-
-    if not quality_options:
-        quality_options = [
-            {"id": "mp4_best", "label": "MP4 Best Quality", "format": "mp4", "quality": "best"},
-        ]
-
+    # Audio formats
     quality_options += [
-        {"id": "mp3_320", "label": "MP3 Audio (320kbps)", "format": "mp3", "quality": "320"},
-        {"id": "mp3_192", "label": "MP3 Audio (192kbps)", "format": "mp3", "quality": "192"},
-        {"id": "m4a_best", "label": "M4A AAC Audio", "format": "m4a", "quality": "best"},
-        {"id": "wav_best", "label": "WAV Lossless Audio", "format": "wav", "quality": "best"},
-        {"id": "flac_best", "label": "FLAC Lossless Audio", "format": "flac", "quality": "best"},
+        {"id": "mp3_320", "label": "MP3 Audio (320kbps High Quality)", "format": "mp3", "quality": "320"},
+        {"id": "mp3_192", "label": "MP3 Audio (192kbps Standard)", "format": "mp3", "quality": "192"},
+        {"id": "m4a_best", "label": "M4A AAC Audio", "format": "mp3", "quality": "m4a"},
+        {"id": "wav_best", "label": "WAV Lossless Audio", "format": "mp3", "quality": "wav"},
+        {"id": "flac_best", "label": "FLAC Lossless Audio", "format": "mp3", "quality": "flac"},
     ]
     return quality_options
 
@@ -127,15 +136,17 @@ def _extract_quality_options(info: dict) -> list[dict]:
 async def get_youtube_info(url: str) -> dict:
     def _extract_with_fallback():
         strategies = [
-            # 1. Primary mobile clients (android, ios - bypasses datacenter bot detection)
-            {"use_cookies": False, "player_clients": ["android", "ios"]},
-            # 2. Android alone
+            # 1. Primary mobile clients (bypasses datacenter bot detection)
+            {"use_cookies": False, "player_clients": ["android_creator", "android", "ios"]},
+            # 2. Android creator alone
+            {"use_cookies": False, "player_clients": ["android_creator"]},
+            # 3. Android alone
             {"use_cookies": False, "player_clients": ["android"]},
-            # 3. Web Safari & iOS fallback
+            # 4. Web Safari & iOS fallback
             {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
-            # 4. Cookies (if provided for age-gated media)
-            {"use_cookies": True, "player_clients": ["android", "ios"]},
-            # 5. iOS / mweb fallback
+            # 5. Cookies (if provided)
+            {"use_cookies": True, "player_clients": ["android_creator", "android", "ios"]},
+            # 6. iOS / mweb fallback
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
         ]
 
@@ -178,31 +189,33 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
     fmt_lower = format.lower()
     output_template = str(TEMP_DIR / f"{job_id}.%(ext)s")
 
-    audio_formats = ["mp3", "m4a", "wav", "flac", "opus", "aac", "ogg"]
-    if fmt_lower in audio_formats:
-        ext = fmt_lower
-        bitrate = quality if quality.isdigit() else "192"
+    audio_targets = ["mp3", "m4a", "wav", "flac", "aac", "opus", "ogg"]
+    if fmt_lower == "mp3" or fmt_lower in audio_targets or quality.lower() in audio_targets:
+        codec = quality.lower() if quality.lower() in audio_targets else "mp3"
+        bitrate = quality if quality.isdigit() else "320"
+        ext = codec
         download_opts = {
             "outtmpl": output_template,
             "format": "bestaudio/best",
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": fmt_lower,
+                "preferredcodec": codec,
                 "preferredquality": bitrate,
             }],
         }
     else:
-        ext = fmt_lower if fmt_lower in ["webm", "mkv", "mov", "avi"] else "mp4"
+        ext = "mp4"
         if quality and quality.endswith("p") and quality[:-1].isdigit():
             target_height = int(quality[:-1])
             format_spec = (
-                f"bestvideo[height<={target_height}][ext={ext}]+bestaudio/"
                 f"bestvideo[height<={target_height}]+bestaudio/"
+                f"bestvideo[height<={target_height}][ext=mp4]+bestaudio/"
                 f"best[height<={target_height}]/"
-                f"best[ext={ext}]/best"
+                f"bestvideo+bestaudio/"
+                f"best"
             )
         else:
-            format_spec = f"bestvideo[ext={ext}]+bestaudio/bestvideo+bestaudio/best[ext={ext}]/best"
+            format_spec = "bestvideo+bestaudio/best"
 
         download_opts = {
             "outtmpl": output_template,
