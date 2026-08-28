@@ -11,12 +11,20 @@ from app.database import init_db
 import app.models.user  # noqa: F401
 import app.models.download_history  # noqa: F401
 
+import os
+
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Auto initialize DB tables on startup
     await init_db()
+    proxy = getattr(settings, "YOUTUBE_PROXY", None) or os.getenv("YOUTUBE_PROXY")
+    if proxy:
+        masked = proxy.split("@")[-1] if "@" in proxy else "ENABLED"
+        logger.info(f"[VideoSave] YouTube Proxy active: {masked}")
+    else:
+        logger.warning("[VideoSave] No YOUTUBE_PROXY configured.")
     yield
 
 app = FastAPI(title="VideoDownloader API", version="1.0.0", lifespan=lifespan)
