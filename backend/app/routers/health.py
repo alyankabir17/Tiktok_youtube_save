@@ -9,7 +9,7 @@ from app.database import engine
 router = APIRouter(tags=["health"])
 
 
-@router.get("/api/health")
+@router.api_route("/api/health", methods=["GET", "HEAD"])
 async def health() -> dict[str, str]:
     async with engine.connect() as connection:
         await connection.execute(text("SELECT 1"))
