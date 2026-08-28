@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Eye, Heart, Clock, Music, Film, Loader2, CheckCircle2, Sparkles } from "lucide-react";
+import { Download, Eye, Heart, Clock, Music, Film, Loader2, CheckCircle2, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -28,7 +28,6 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
     () => (info.formats || []).filter((f) => f.format === format),
     [info.formats, format],
   );
-
   const [quality, setQuality] = useState<string>(() => {
     const list = (info.formats || []).filter((f) => f.format === "mp4");
     return list.find((f) => f.quality === "1080p")?.quality ||
@@ -36,7 +35,7 @@ export function VideoCard({ info, status, progress, onDownload }: Props) {
            list[0]?.quality || "";
   });
 
-  // Automatically select best HD quality whenever video info or format changes
+  // Sync quality whenever video info or format changes
   useEffect(() => {
     const list = (info.formats || []).filter((f) => f.format === format);
     if (list.length > 0) {

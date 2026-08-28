@@ -33,9 +33,6 @@ class Settings(BaseSettings):
     YOUTUBE_COOKIE_FILE: str | None = None
     YOUTUBE_COOKIES: str | None = None
     YOUTUBE_PO_TOKEN: str | None = None
-    YOUTUBE_PROXY: str | None = None
-    HTTP_PROXY: str | None = None
-    HTTPS_PROXY: str | None = None
     INSTAGRAM_COOKIE_FILE: str | None = None
     INSTAGRAM_COOKIES: str | None = None
     VIMEO_COOKIE_FILE: str | None = None
