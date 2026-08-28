@@ -33,6 +33,7 @@ def _get_cookie_file_path() -> str | None:
 
 
 def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
+    clients = player_clients or ["android", "ios"]
     clients = player_clients or ["android_creator", "android", "ios"]
     
     extractor_youtube = {
@@ -87,31 +88,34 @@ def _extract_quality_options(info: dict) -> list[dict]:
     available_heights = set()
     for fmt in info.get("formats", []):
         h = fmt.get("height")
-        if h and fmt.get("vcodec") != "none":
+        if h and (fmt.get("vcodec") != "none" or fmt.get("ext") in ["mp4", "webm"]):
             available_heights.add(h)
 
-    standard_heights = [4320, 2160, 1440, 1080, 720, 480, 360, 240, 144]
-    quality_options = []
+    max_height = max(available_heights) if available_heights else 1080
+    standard_heights = [2160, 1440, 1080, 720, 480, 360, 240, 144]
 
-    combined_heights = sorted(
-        available_heights.union(set(h for h in standard_heights if any(avail <= h for avail in available_heights))),
+    display_heights = sorted(
+        set([h for h in standard_heights if h <= max(max_height, 1080)] + list(available_heights)),
         reverse=True,
     )
 
-    for height in combined_heights:
-        if height in available_heights or any(h >= height for h in available_heights):
-            label_map = {4320: "8K", 2160: "4K", 1440: "2K (1440p)"}
-            label = label_map.get(height, f"{height}p")
-            quality_options.append({
-                "id": f"mp4_{height}p",
-                "label": f"MP4 {label}",
-                "format": "mp4",
-                "quality": f"{height}p",
-            })
+    quality_options = []
+    for height in display_heights:
+        label_map = {4320: "8K", 2160: "4K", 1440: "2K (1440p)", 1080: "1080p Full HD", 720: "720p HD", 480: "480p SD"}
+        label = label_map.get(height, f"{height}p")
+        quality_options.append({
+            "id": f"mp4_{height}p",
+            "label": f"MP4 {label}",
+            "format": "mp4",
+            "quality": f"{height}p",
+        })
 
     if not quality_options:
         quality_options = [
-            {"id": "mp4_best", "label": "MP4 Best Quality", "format": "mp4", "quality": "best"},
+            {"id": "mp4_best", "label": "MP4 Best HD Quality", "format": "mp4", "quality": "best"},
+            {"id": "mp4_1080p", "label": "MP4 1080p Full HD", "format": "mp4", "quality": "1080p"},
+            {"id": "mp4_720p", "label": "MP4 720p HD", "format": "mp4", "quality": "720p"},
+            {"id": "mp4_360p", "label": "MP4 360p", "format": "mp4", "quality": "360p"},
         ]
 
     quality_options += [
@@ -128,7 +132,7 @@ async def get_youtube_info(url: str) -> dict:
     def _extract_with_fallback():
         strategies = [
             # 1. Primary mobile clients (android, ios - bypasses datacenter bot detection)
-            {"use_cookies": False, "player_clients": ["android", "ios"]},
+            {"use_cookies": False, "player_clients": ["android_creator", "android", "ios"]},
             # 2. Android alone
             {"use_cookies": False, "player_clients": ["android"]},
             # 3. Web Safari & iOS fallback
@@ -196,13 +200,14 @@ async def download_youtube(url: str, format: str, quality: str) -> dict:
         if quality and quality.endswith("p") and quality[:-1].isdigit():
             target_height = int(quality[:-1])
             format_spec = (
-                f"bestvideo[height<={target_height}][ext={ext}]+bestaudio/"
                 f"bestvideo[height<={target_height}]+bestaudio/"
+                f"bestvideo[height<={target_height}][ext=mp4]+bestaudio/"
                 f"best[height<={target_height}]/"
-                f"best[ext={ext}]/best"
+                f"bestvideo+bestaudio/"
+                f"best"
             )
         else:
-            format_spec = f"bestvideo[ext={ext}]+bestaudio/bestvideo+bestaudio/best[ext={ext}]/best"
+            format_spec = "bestvideo+bestaudio/best"
 
         download_opts = {
             "outtmpl": output_template,

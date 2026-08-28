@@ -82,7 +82,7 @@ export interface BlogPost {
   contentMarkdown: string;
 }
 
-const apiOrigin = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) || "http://localhost:8000";
+const apiOrigin = (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || "http://localhost:8000";
 
 function toApiUrl(path: string): string {
   const base = String(apiOrigin).replace(/\/$/, "");
