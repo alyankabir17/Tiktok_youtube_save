@@ -58,6 +58,7 @@ class Settings(BaseSettings):
                     else:
                         res.append(s + "/")
             return list(dict.fromkeys(res))
+
         if isinstance(value, str):
             stripped = value.strip()
             if not stripped:
@@ -87,6 +88,7 @@ class Settings(BaseSettings):
                 else:
                     res.append(s + "/")
             return list(dict.fromkeys(res))
+
         return ["http://localhost:3000", "https://tik-insta-video-down.vercel.app"]
 
     @property
