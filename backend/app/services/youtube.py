@@ -32,18 +32,27 @@ def _get_cookie_file_path() -> str | None:
     )
 
 
-def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
-    clients = player_clients or ["android"]
-    
-    extractor_youtube = {
-        "player_client": clients,
-    }
-    
-    po_token = getattr(settings, "YOUTUBE_PO_TOKEN", None) or os.getenv("YOUTUBE_PO_TOKEN")
-    if po_token and po_token.strip():
-        extractor_youtube["po_token"] = [po_token.strip()]
+import random
 
-    opts = {
+def _get_proxy_url() -> str | None:
+    proxy_raw = getattr(settings, "YOUTUBE_PROXY", None) or os.getenv("YOUTUBE_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
+    if not proxy_raw or not proxy_raw.strip():
+        return None
+    proxies = [p.strip() for p in proxy_raw.replace("\n", ",").split(",") if p.strip()]
+    if not proxies:
+        return None
+    chosen = random.choice(proxies)
+    if "p.webshare.io" in chosen and "-rotate" not in chosen and "@" in chosen:
+        parts = chosen.split("@", 1)
+        creds = parts[0]
+        if ":" in creds:
+            scheme_user, pwd = creds.rsplit(":", 1)
+            chosen = f"{scheme_user}-rotate:{pwd}@{parts[1]}"
+    return chosen
+
+
+def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
+    opts: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
         "socket_timeout": 30,
@@ -55,26 +64,24 @@ def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = Fals
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
         },
-        "extractor_args": {
-            "youtube": extractor_youtube
-        }
     }
+
+    if player_clients:
+        extractor_youtube = {
+            "player_client": player_clients,
+        }
+        po_token = getattr(settings, "YOUTUBE_PO_TOKEN", None) or os.getenv("YOUTUBE_PO_TOKEN")
+        if po_token and po_token.strip():
+            extractor_youtube["po_token"] = [po_token.strip()]
+        opts["extractor_args"] = {"youtube": extractor_youtube}
 
     if use_cookies:
         cookie_file = _get_cookie_file_path()
         if cookie_file:
             opts["cookiefile"] = cookie_file
 
-    proxy = getattr(settings, "YOUTUBE_PROXY", None) or os.getenv("YOUTUBE_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
-    if proxy and proxy.strip():
-        proxy_str = proxy.strip()
-        # Auto-correct Webshare rotating username if user forgot "-rotate"
-        if "p.webshare.io" in proxy_str and "-rotate" not in proxy_str and "@" in proxy_str:
-            parts = proxy_str.split("@", 1)
-            creds = parts[0]
-            if ":" in creds:
-                scheme_user, pwd = creds.rsplit(":", 1)
-                proxy_str = f"{scheme_user}-rotate:{pwd}@{parts[1]}"
+    proxy_str = _get_proxy_url()
+    if proxy_str:
         opts["proxy"] = proxy_str
 
     if extra_opts:
@@ -136,18 +143,11 @@ def _extract_quality_options(info: dict) -> list[dict]:
 async def get_youtube_info(url: str) -> dict:
     def _extract_with_fallback():
         strategies = [
-            # 1. Primary mobile clients (bypasses datacenter bot detection)
-            {"use_cookies": False, "player_clients": ["android_creator", "android", "ios"]},
-            # 2. Android creator alone
-            {"use_cookies": False, "player_clients": ["android_creator"]},
-            # 3. Android alone
+            {"use_cookies": False, "player_clients": ["android_vr", "android"]},
             {"use_cookies": False, "player_clients": ["android"]},
-            # 4. Web Safari & iOS fallback
-            {"use_cookies": False, "player_clients": ["web_safari", "ios"]},
-            # 5. Cookies (if provided)
-            {"use_cookies": True, "player_clients": ["android_creator", "android", "ios"]},
-            # 6. iOS / mweb fallback
+            {"use_cookies": True, "player_clients": ["android_vr", "android"]},
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
+            {"use_cookies": False, "player_clients": None},
         ]
 
         last_error = None
@@ -265,11 +265,11 @@ async def download_youtube(url: str, format: str, quality: str, custom_job_id: s
 
     def _download_with_fallback():
         strategies = [
+            {"use_cookies": False, "player_clients": ["android_vr", "android"]},
             {"use_cookies": False, "player_clients": ["android"]},
-            {"use_cookies": False, "player_clients": ["android_creator", "android"]},
-            {"use_cookies": False, "player_clients": ["web_safari", "android"]},
-            {"use_cookies": True, "player_clients": ["android"]},
+            {"use_cookies": True, "player_clients": ["android_vr", "android"]},
             {"use_cookies": False, "player_clients": ["ios", "mweb"]},
+            {"use_cookies": False, "player_clients": None},
         ]
 
         last_error = None
