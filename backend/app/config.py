@@ -22,10 +22,14 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] | str | Any = Field(default_factory=lambda: [
         "http://localhost:3000",
         "http://localhost:3001",
+        "https://tik-insta-video-down.vercel.app",
+        "https://tik-insta-video-down.vercel.app/",
+        "https://tiktok-youtube-save.onrender.com",
     ])
 
     TEMP_DIR: str = "/tmp/downloads"
     MAX_DOWNLOAD_SIZE_MB: int = 500
+    CLEANUP_DELAY_SECONDS: int = 3600
     ANON_RATE_LIMIT_PER_HOUR: int = 30
     AUTH_RATE_LIMIT_PER_HOUR: int = 120
 
@@ -33,6 +37,9 @@ class Settings(BaseSettings):
     YOUTUBE_COOKIE_FILE: str | None = None
     YOUTUBE_COOKIES: str | None = None
     YOUTUBE_PO_TOKEN: str | None = None
+    YOUTUBE_PROXY: str | None = None
+    HTTP_PROXY: str | None = None
+    HTTPS_PROXY: str | None = None
     INSTAGRAM_COOKIE_FILE: str | None = None
     INSTAGRAM_COOKIES: str | None = None
     VIMEO_COOKIE_FILE: str | None = None
@@ -41,20 +48,46 @@ class Settings(BaseSettings):
     @classmethod
     def _parse_allowed_origins(cls, value: Any) -> list[str]:
         if isinstance(value, list):
-            return [str(v).strip() for v in value if str(v).strip()]
+            res = []
+            for v in value:
+                s = str(v).strip()
+                if s:
+                    res.append(s)
+                    if s.endswith("/"):
+                        res.append(s.rstrip("/"))
+                    else:
+                        res.append(s + "/")
+            return list(dict.fromkeys(res))
         if isinstance(value, str):
             stripped = value.strip()
             if not stripped:
-                return ["http://localhost:3000"]
+                return ["http://localhost:3000", "https://tik-insta-video-down.vercel.app"]
             if stripped.startswith("["):
                 try:
                     parsed = json.loads(stripped)
                     if isinstance(parsed, list):
-                        return [str(v).strip() for v in parsed if str(v).strip()]
+                        res = []
+                        for v in parsed:
+                            s = str(v).strip()
+                            if s:
+                                res.append(s)
+                                if s.endswith("/"):
+                                    res.append(s.rstrip("/"))
+                                else:
+                                    res.append(s + "/")
+                        return list(dict.fromkeys(res))
                 except Exception:
                     pass
-            return [v.strip() for v in stripped.split(",") if v.strip()]
-        return ["http://localhost:3000"]
+            parts = [v.strip() for v in stripped.split(",") if v.strip()]
+            res = []
+            for s in parts:
+                res.append(s)
+                if s.endswith("/"):
+                    res.append(s.rstrip("/"))
+                else:
+                    res.append(s + "/")
+            return list(dict.fromkeys(res))
+        return ["http://localhost:3000", "https://tik-insta-video-down.vercel.app"]
 
     @property
     def temp_path(self) -> Path:
