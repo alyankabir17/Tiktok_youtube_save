@@ -52,17 +52,6 @@ def _get_proxy_url() -> str | None:
 
 
 def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = False, player_clients: list[str] | None = None) -> dict:
-    clients = player_clients or ["android"]
-    
-    extractor_youtube = {
-        "player_client": clients,
-    }
-    
-    po_token = getattr(settings, "YOUTUBE_PO_TOKEN", None) or os.getenv("YOUTUBE_PO_TOKEN")
-    if po_token and po_token.strip():
-        extractor_youtube["po_token"] = [po_token.strip()]
-
-    opts = {
     opts: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
@@ -75,9 +64,6 @@ def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = Fals
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
         },
-        "extractor_args": {
-            "youtube": extractor_youtube
-        }
     }
 
     if player_clients:
@@ -94,16 +80,6 @@ def _build_youtube_opts(extra_opts: dict | None = None, use_cookies: bool = Fals
         if cookie_file:
             opts["cookiefile"] = cookie_file
 
-    proxy = getattr(settings, "YOUTUBE_PROXY", None) or os.getenv("YOUTUBE_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
-    if proxy and proxy.strip():
-        proxy_str = proxy.strip()
-        # Auto-correct Webshare rotating username if user forgot "-rotate"
-        if "p.webshare.io" in proxy_str and "-rotate" not in proxy_str and "@" in proxy_str:
-            parts = proxy_str.split("@", 1)
-            creds = parts[0]
-            if ":" in creds:
-                scheme_user, pwd = creds.rsplit(":", 1)
-                proxy_str = f"{scheme_user}-rotate:{pwd}@{parts[1]}"
     proxy_str = _get_proxy_url()
     if proxy_str:
         opts["proxy"] = proxy_str
